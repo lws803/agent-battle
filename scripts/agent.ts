@@ -18,7 +18,7 @@
  *   npx tsx scripts/agent.ts --name Gandalf --class mage \
  *     --persona "You are a wise and cunning archmage. Favour powerful spells and clever feints."
  *
- *   # Terminal 2 — joins the room (use matchId printed by terminal 1)
+ *   # Terminal 2 — joins the room (use match_id printed by terminal 1)
  *   npx tsx scripts/agent.ts --name Sauron --class warrior --match-id <matchId> \
  *     --persona "You are a ruthless dark lord. Attack relentlessly, show no mercy."
  */
@@ -66,7 +66,7 @@ Examples:
   npx tsx scripts/agent.ts --name Gandalf --class mage \\
     --persona "You are a wise archmage who favours lightning spells and illusions."
 
-  # Join that room (Terminal 2) — copy the matchId printed above
+  # Join that room (Terminal 2) — copy the match_id printed above
   npx tsx scripts/agent.ts --name Sauron --class warrior --match-id abc12345 \\
     --persona "You are a dark overlord. Crush your enemy with brute force and dark magic."
 `);
@@ -170,19 +170,19 @@ async function main(): Promise<void> {
   socket.on("connect", () => {
     console.log(`${label} Connected to ${SERVER_URL}`);
     socket.emit("JOIN_MATCH", {
-      agentName: AGENT_NAME,
+      agent_name: AGENT_NAME,
       character: AGENT_CLASS,
-      matchId: MATCH_ID,
+      match_id: MATCH_ID,
     });
   });
 
-  socket.on("MATCH_CREATED", (d: { matchId: string }) => {
+  socket.on("MATCH_CREATED", (d: { match_id: string }) => {
     console.log(
-      `${label} ${C.yellow}Match ID: ${C.bold}${d.matchId}${C.reset}`
+      `${label} ${C.yellow}Match ID: ${C.bold}${d.match_id}${C.reset}`
     );
     if (!MATCH_ID) {
       console.log(
-        `${label} ${C.dim}Share this matchId with your opponent: --match-id ${d.matchId}${C.reset}`
+        `${label} ${C.dim}Share this match_id with your opponent: --match-id ${d.match_id}${C.reset}`
       );
     }
   });
@@ -194,19 +194,19 @@ async function main(): Promise<void> {
   socket.on(
     "MATCH_START",
     (d: {
-      opponentName: string;
-      yourHp: number;
-      opponentHp: number;
-      yourCharacter: string;
-      opponentCharacter: string;
+      opponent_name: string;
+      your_hp: number;
+      opponent_hp: number;
+      your_character: string;
+      opponent_character: string;
     }) => {
-      opponentName = d.opponentName;
-      opponentClass = d.opponentCharacter;
-      myClass = d.yourCharacter;
+      opponentName = d.opponent_name;
+      opponentClass = d.opponent_character;
+      myClass = d.your_character;
       console.log(
         `\n${label} ${C.bold}Fight!${C.reset} ` +
-          `${C.green}${myClass}${C.reset} (${d.yourHp} HP) vs ` +
-          `${C.red}${opponentName}${C.reset} the ${opponentClass} (${d.opponentHp} HP)\n`
+          `${C.green}${myClass}${C.reset} (${d.your_hp} HP) vs ` +
+          `${C.red}${opponentName}${C.reset} the ${opponentClass} (${d.opponent_hp} HP)\n`
       );
     }
   );
@@ -215,21 +215,21 @@ async function main(): Promise<void> {
     "YOUR_TURN",
     async (d: {
       turn: number;
-      state: { hpSelf: number; hpOpponent: number };
+      state: { hp_self: number; hp_opponent: number };
       deadline: number;
     }) => {
       const timeLeft = Math.round((d.deadline - Date.now()) / 1000);
       console.log(
         `${label} Turn ${C.bold}${d.turn}${C.reset} | ` +
-          `HP ${C.green}${d.state.hpSelf}${C.reset} vs ${C.red}${d.state.hpOpponent}${C.reset} | ` +
+          `HP ${C.green}${d.state.hp_self}${C.reset} vs ${C.red}${d.state.hp_opponent}${C.reset} | ` +
           `${C.dim}${timeLeft}s remaining${C.reset}`
       );
       console.log(`${label} ${C.dim}Thinking…${C.reset}`);
 
       const action = await decideAction({
         turn: d.turn,
-        myHp: d.state.hpSelf,
-        opponentHp: d.state.hpOpponent,
+        myHp: d.state.hp_self,
+        opponentHp: d.state.hp_opponent,
         opponentName,
         myClass,
         opponentClass,
@@ -246,24 +246,24 @@ async function main(): Promise<void> {
     (d: {
       turn: number;
       narrative: string;
-      state: { hpA: number; hpB: number };
+      state: { hp_a: number; hp_b: number };
     }) => {
       lastNarrative = d.narrative;
       console.log(
         `\n  ${C.magenta}${C.bold}GM:${C.reset} ${C.magenta}${d.narrative}${C.reset}`
       );
       console.log(
-        `  ${C.dim}HP — A: ${d.state.hpA} | B: ${d.state.hpB}${C.reset}\n`
+        `  ${C.dim}HP — A: ${d.state.hp_a} | B: ${d.state.hp_b}${C.reset}\n`
       );
     }
   );
 
-  socket.on("MATCH_OVER", (d: { winner: string; finalNarrative: string }) => {
+  socket.on("MATCH_OVER", (d: { winner: string; final_narrative: string }) => {
     const isWinner = d.winner === AGENT_NAME;
     const isDraw = d.winner === "draw";
     const color = isDraw ? C.yellow : isWinner ? C.green : C.red;
     console.log(`\n${C.bold}━━━ MATCH OVER ━━━${C.reset}`);
-    console.log(`  ${C.magenta}${d.finalNarrative}${C.reset}`);
+    console.log(`  ${C.magenta}${d.final_narrative}${C.reset}`);
     console.log(`  Winner: ${color}${C.bold}${d.winner}${C.reset}\n`);
     socket.disconnect();
     process.exit(0);

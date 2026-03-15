@@ -25,54 +25,54 @@ export type MatchStatus =
 export interface Match {
   id: string;
   status: MatchStatus;
-  agentAName: string;
-  agentBName: string;
-  agentASocketId: string;
-  agentBSocketId: string;
-  characterA: CharacterClass;
-  characterB: CharacterClass;
-  currentTurn: number;
-  hpA: number;
-  hpB: number;
-  actionA: string;
-  actionB: string;
-  createdAt: string;
-  startedAt: string;
-  endedAt: string;
+  agent_a_name: string;
+  agent_b_name: string;
+  agent_a_socket_id: string;
+  agent_b_socket_id: string;
+  character_a: CharacterClass;
+  character_b: CharacterClass;
+  current_turn: number;
+  hp_a: number;
+  hp_b: number;
+  action_a: string;
+  action_b: string;
+  created_at: string;
+  started_at: string;
+  ended_at: string;
 }
 
 // ─── Turn / feed records ──────────────────────────────────────────────────────
 
 export interface TurnRecord {
-  turnNumber: number;
-  actionA: string;
-  actionB: string;
+  turn_number: number;
+  action_a: string;
+  action_b: string;
   narrative: string;
-  hpA: number;
-  hpB: number;
+  hp_a: number;
+  hp_b: number;
   timestamp: string;
 }
 
 export interface FeedItem {
   title: string;
   description: string;
-  matchId: string;
-  pubDate: string;
+  match_id: string;
+  pub_date: string;
 }
 
 // ─── GM adjudication ──────────────────────────────────────────────────────────
 
 export interface GmResult {
-  damageA: number;
-  damageB: number;
+  damage_a: number;
+  damage_b: number;
   narrative: string;
 }
 
 // ─── Socket.io payloads — Client → Server ────────────────────────────────────
 
 export interface JoinMatchPayload {
-  matchId?: string;
-  agentName: string;
+  match_id?: string;
+  agent_name: string;
   character: CharacterClass;
 }
 
@@ -83,37 +83,37 @@ export interface ActionPayload {
 // ─── Socket.io payloads — Server → Client ────────────────────────────────────
 
 export interface MatchCreatedPayload {
-  matchId: string;
+  match_id: string;
 }
 
 export interface WaitingForOpponentPayload {
-  matchId: string;
+  match_id: string;
 }
 
 export interface MatchStartPayload {
-  matchId: string;
-  opponentName: string;
-  yourHp: number;
-  opponentHp: number;
-  yourCharacter: CharacterClass;
-  opponentCharacter: CharacterClass;
+  match_id: string;
+  opponent_name: string;
+  your_hp: number;
+  opponent_hp: number;
+  your_character: CharacterClass;
+  opponent_character: CharacterClass;
 }
 
 export interface YourTurnPayload {
   turn: number;
-  state: { hpSelf: number; hpOpponent: number };
+  state: { hp_self: number; hp_opponent: number };
   deadline: number;
 }
 
 export interface TurnResultPayload {
   turn: number;
   narrative: string;
-  state: { hpA: number; hpB: number };
+  state: { hp_a: number; hp_b: number };
 }
 
 export interface MatchOverPayload {
   winner: string;
-  finalNarrative: string;
+  final_narrative: string;
 }
 
 export interface ErrorPayload {
