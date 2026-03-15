@@ -24,6 +24,7 @@
  */
 
 import "dotenv/config";
+import { z } from "zod";
 import { io, Socket } from "socket.io-client";
 import { parseArgs } from "util";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
@@ -75,17 +76,31 @@ Examples:
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-const AGENT_NAME = values.name as string;
-const PERSONA = values.persona as string;
-const MATCH_ID = values["match-id"] as string | undefined;
-const SERVER_URL = values.url as string;
+const CLASSES: string[] = ["warrior", "mage", "rogue"];
 
-const CLASSES = ["warrior", "mage", "rogue"] as const;
-const AGENT_CLASS = (
-  CLASSES.includes(values.class as (typeof CLASSES)[number])
-    ? values.class
-    : CLASSES[Math.floor(Math.random() * CLASSES.length)]
-) as (typeof CLASSES)[number];
+const agentConfigSchema = z
+  .object({
+    name: z.string().default("Agent"),
+    persona: z
+      .string()
+      .default("You are a fierce combatant. Fight with honour and cunning."),
+    "match-id": z.string().optional(),
+    url: z.string().default("http://localhost:3000"),
+    class: z.string().optional(),
+  })
+  .transform((c) => ({
+    ...c,
+    class:
+      (c.class && CLASSES.includes(c.class) ? c.class : null) ??
+      CLASSES[Math.floor(Math.random() * CLASSES.length)],
+  }));
+
+const config = agentConfigSchema.parse(values);
+const AGENT_NAME = config.name;
+const PERSONA = config.persona;
+const MATCH_ID = config["match-id"];
+const SERVER_URL = config.url;
+const AGENT_CLASS = config.class;
 
 // ─── Colours ──────────────────────────────────────────────────────────────────
 

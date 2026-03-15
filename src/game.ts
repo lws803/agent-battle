@@ -1,13 +1,14 @@
+import { z } from "zod";
 import redis from "./redis.js";
 import {
   Match,
-  MatchStatus,
   CharacterClass,
   TurnRecord,
   FeedItem,
   REDIS_KEYS,
   MATCH_TTL_SECONDS,
   FEED_CAP,
+  CHARACTER_STATS,
 } from "./types.js";
 
 // ─── Hash serialization ───────────────────────────────────────────────────────
@@ -20,25 +21,72 @@ function matchToHash(m: Partial<Match>): Record<string, string> {
   return result;
 }
 
+const matchStatusSchema = z.enum([
+  "waiting",
+  "active",
+  "completed",
+  "forfeited",
+  "draw",
+]);
+
+const matchHashSchema = z
+  .object({
+    id: z.string().optional(),
+    status: z.string().optional(),
+    agentAName: z.string().optional(),
+    agentBName: z.string().optional(),
+    agentASocketId: z.string().optional(),
+    agentBSocketId: z.string().optional(),
+    characterA: z.string().optional(),
+    characterB: z.string().optional(),
+    currentTurn: z.string().optional(),
+    hpA: z.string().optional(),
+    hpB: z.string().optional(),
+    actionA: z.string().optional(),
+    actionB: z.string().optional(),
+    createdAt: z.string().optional(),
+    startedAt: z.string().optional(),
+    endedAt: z.string().optional(),
+  })
+  .transform((h) => ({
+    id: h.id ?? "",
+    status: (() => {
+      const parsed = matchStatusSchema.safeParse(h.status ?? "waiting");
+      return parsed.success ? parsed.data : "waiting";
+    })(),
+    agentAName: h.agentAName ?? "",
+    agentBName: h.agentBName ?? "",
+    agentASocketId: h.agentASocketId ?? "",
+    agentBSocketId: h.agentBSocketId ?? "",
+    characterA:
+      h.characterA && h.characterA in CHARACTER_STATS
+        ? h.characterA
+        : "warrior",
+    characterB:
+      h.characterB && h.characterB in CHARACTER_STATS
+        ? h.characterB
+        : "warrior",
+    currentTurn: (() => {
+      const n = parseInt(h.currentTurn ?? "0", 10);
+      return Number.isFinite(n) ? n : 0;
+    })(),
+    hpA: (() => {
+      const n = parseInt(h.hpA ?? "0", 10);
+      return Number.isFinite(n) ? n : 0;
+    })(),
+    hpB: (() => {
+      const n = parseInt(h.hpB ?? "0", 10);
+      return Number.isFinite(n) ? n : 0;
+    })(),
+    actionA: h.actionA ?? "",
+    actionB: h.actionB ?? "",
+    createdAt: h.createdAt ?? "",
+    startedAt: h.startedAt ?? "",
+    endedAt: h.endedAt ?? "",
+  }));
+
 function matchFromHash(h: Record<string, string>): Match {
-  return {
-    id: h["id"] ?? "",
-    status: (h["status"] ?? "waiting") as MatchStatus,
-    agentAName: h["agentAName"] ?? "",
-    agentBName: h["agentBName"] ?? "",
-    agentASocketId: h["agentASocketId"] ?? "",
-    agentBSocketId: h["agentBSocketId"] ?? "",
-    characterA: (h["characterA"] ?? "warrior") as CharacterClass,
-    characterB: (h["characterB"] ?? "warrior") as CharacterClass,
-    currentTurn: parseInt(h["currentTurn"] ?? "0", 10),
-    hpA: parseInt(h["hpA"] ?? "0", 10),
-    hpB: parseInt(h["hpB"] ?? "0", 10),
-    actionA: h["actionA"] ?? "",
-    actionB: h["actionB"] ?? "",
-    createdAt: h["createdAt"] ?? "",
-    startedAt: h["startedAt"] ?? "",
-    endedAt: h["endedAt"] ?? "",
-  };
+  return matchHashSchema.parse(h);
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────

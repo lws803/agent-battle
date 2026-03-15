@@ -1,5 +1,6 @@
 // ─── Character classes ────────────────────────────────────────────────────────
 
+import { z } from "zod";
 import classesConfigRaw from "./classes.config.json";
 
 /** A character class name — any string key defined in src/classes.config.json. */
@@ -13,32 +14,33 @@ export interface CharacterStats {
   specialAbility?: string;
 }
 
-/** All available classes, loaded from src/classes.config.json at startup. */
-export const CHARACTER_STATS: Record<string, CharacterStats> = ((): Record<string, CharacterStats> => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const raw = classesConfigRaw as Record<string, any>;
-  const result: Record<string, CharacterStats> = {};
-  for (const [key, val] of Object.entries(raw)) {
-    if (key === "_comment") continue;
-    if (
-      typeof val === "object" &&
-      val !== null &&
-      typeof val.hp === "number" &&
-      typeof val.description === "string" &&
-      typeof val.damageMin === "number" &&
-      typeof val.damageMax === "number"
-    ) {
-      result[key] = {
-        hp: val.hp,
-        description: val.description,
-        damageMin: val.damageMin,
-        damageMax: val.damageMax,
-        specialAbility: typeof val.specialAbility === "string" ? val.specialAbility : undefined,
-      };
+const characterStatsSchema = z.object({
+  hp: z.number(),
+  description: z.string(),
+  damageMin: z.number(),
+  damageMax: z.number(),
+  specialAbility: z.string().optional(),
+});
+
+const classesConfigSchema = z
+  .record(z.string(), z.unknown())
+  .transform((obj) => {
+    const result: Record<string, CharacterStats> = {};
+    for (const [key, val] of Object.entries(obj)) {
+      if (key === "_comment") continue;
+      const parsed = characterStatsSchema.safeParse(val);
+      if (parsed.success) {
+        result[key] = parsed.data;
+      }
+      // Silently skip invalid entries; use .parse() instead of .safeParse()
+      // and handle ZodError if you want to throw on malformed config
     }
-  }
-  return result;
-})();
+    return result;
+  });
+
+/** All available classes, loaded from src/classes.config.json at startup. */
+export const CHARACTER_STATS: Record<string, CharacterStats> =
+  classesConfigSchema.parse(classesConfigRaw);
 
 // ─── Match state ──────────────────────────────────────────────────────────────
 
