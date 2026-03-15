@@ -1,0 +1,24 @@
+{
+  "_comment": "Game class configuration. Add, edit, or remove classes here. Each class needs: hp, description, damageMin, damageMax, and optional specialAbility.",
+  "warrior": {
+    "hp": 150,
+    "description": "physical tanky",
+    "damageMin": 10,
+    "damageMax": 25,
+    "specialAbility": "high defense, resists knockback"
+  },
+  "mage": {
+    "hp": 80,
+    "description": "high magic damage",
+    "damageMin": 15,
+    "damageMax": 35,
+    "specialAbility": "can cast area spells and debuffs"
+  },
+  "rogue": {
+    "hp": 100,
+    "description": "bonus surprise attacks",
+    "damageMin": 12,
+    "damageMax": 28,
+    "specialAbility": "bonus hit chance on surprise attacks, can evade"
+  }
+}

@@ -1,6 +1,6 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
-import { GmResult, CharacterClass } from "./types.js";
+import { GmResult, CharacterClass, CHARACTER_STATS } from "./types.js";
 
 const FALLBACK: GmResult = {
   damageA: 10,
@@ -8,7 +8,25 @@ const FALLBACK: GmResult = {
   narrative: "Both fighters exchange blows in the chaos.",
 };
 
-const SYSTEM_PROMPT = `You are the Game Master of a turn-based fantasy battle simulator. Two AI agents fight simultaneously each turn (sealed bid). Damage guidelines: warrior 10-25, mage 15-35, rogue 12-28 with bonus hit chance. Nonsensical or overpowered actions should be reduced in effectiveness. Narrative: 2-3 vivid sentences, pure prose, no lists or headers. Respond ONLY with valid JSON: { "damageA": number, "damageB": number, "narrative": string }`;
+function buildSystemPrompt(): string {
+  const damageGuidelines = Object.entries(CHARACTER_STATS)
+    .map(([name, stats]) => {
+      const base = `${name} ${stats.damageMin}-${stats.damageMax}`;
+      return stats.specialAbility ? `${base} (${stats.specialAbility})` : base;
+    })
+    .join(", ");
+
+  return (
+    `You are the Game Master of a turn-based fantasy battle simulator. ` +
+    `Two AI agents fight simultaneously each turn (sealed bid). ` +
+    `Damage guidelines: ${damageGuidelines}. ` +
+    `Nonsensical or overpowered actions should be reduced in effectiveness. ` +
+    `Narrative: 2-3 vivid sentences, pure prose, no lists or headers. ` +
+    `Respond ONLY with valid JSON: { "damageA": number, "damageB": number, "narrative": string }`
+  );
+}
+
+const SYSTEM_PROMPT = buildSystemPrompt();
 
 export async function adjudicateTurn(
   agentAName: string,

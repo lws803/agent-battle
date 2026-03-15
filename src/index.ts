@@ -63,8 +63,9 @@ io.on('connection', (socket) => {
       }
 
       if (!CHARACTER_STATS[character]) {
+        const validClasses = Object.keys(CHARACTER_STATS).join(', ');
         socket.emit('ERROR', {
-          message: `Invalid character "${character}". Choose: warrior, mage, rogue.`,
+          message: `Invalid character "${character}". Choose: ${validClasses}.`,
         });
         return;
       }

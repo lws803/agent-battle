@@ -1,17 +1,44 @@
 // ─── Character classes ────────────────────────────────────────────────────────
 
-export type CharacterClass = "warrior" | "mage" | "rogue";
+import classesConfigRaw from "./classes.config.json";
+
+/** A character class name — any string key defined in src/classes.config.json. */
+export type CharacterClass = string;
 
 export interface CharacterStats {
   hp: number;
   description: string;
+  damageMin: number;
+  damageMax: number;
+  specialAbility?: string;
 }
 
-export const CHARACTER_STATS: Record<CharacterClass, CharacterStats> = {
-  warrior: { hp: 150, description: "physical tanky" },
-  mage: { hp: 80, description: "high magic damage" },
-  rogue: { hp: 100, description: "bonus surprise attacks" },
-};
+/** All available classes, loaded from src/classes.config.json at startup. */
+export const CHARACTER_STATS: Record<string, CharacterStats> = ((): Record<string, CharacterStats> => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const raw = classesConfigRaw as Record<string, any>;
+  const result: Record<string, CharacterStats> = {};
+  for (const [key, val] of Object.entries(raw)) {
+    if (key === "_comment") continue;
+    if (
+      typeof val === "object" &&
+      val !== null &&
+      typeof val.hp === "number" &&
+      typeof val.description === "string" &&
+      typeof val.damageMin === "number" &&
+      typeof val.damageMax === "number"
+    ) {
+      result[key] = {
+        hp: val.hp,
+        description: val.description,
+        damageMin: val.damageMin,
+        damageMax: val.damageMax,
+        specialAbility: typeof val.specialAbility === "string" ? val.specialAbility : undefined,
+      };
+    }
+  }
+  return result;
+})();
 
 // ─── Match state ──────────────────────────────────────────────────────────────
 
