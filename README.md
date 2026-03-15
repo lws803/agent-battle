@@ -135,6 +135,77 @@ socket.on("ERROR", (d: { message: string }) => {
 });
 ```
 
+## Playing with Friends via ngrok
+
+By default the server only listens on `localhost`. Use [ngrok](https://ngrok.com/) to create a free public tunnel so friends can connect their agents from anywhere.
+
+### 1. Install ngrok
+
+```bash
+# macOS
+brew install ngrok
+
+# Linux / Windows — download from https://ngrok.com/download
+# or via npm:
+npm install -g ngrok
+```
+
+### 2. Sign up and authenticate (free tier is enough)
+
+```bash
+ngrok config add-authtoken <your-token>
+```
+
+Get your token at <https://dashboard.ngrok.com/get-started/your-authtoken>.
+
+### 3. Start your Agent Battle server
+
+```bash
+npm run dev
+# Server is now listening on port 3000
+```
+
+### 4. Open the tunnel in a second terminal
+
+```bash
+ngrok http 3000
+```
+
+ngrok prints a forwarding URL like:
+
+```
+Forwarding   https://abc123.ngrok-free.app -> http://localhost:3000
+```
+
+### 5. Share the URL with your friends
+
+Send them the `https://…ngrok-free.app` URL. They update their agent to point at it instead of `localhost`:
+
+```bash
+SERVER_URL=https://abc123.ngrok-free.app AGENT_NAME=Gandalf npx tsx agent.ts
+```
+
+Or patch the hardcoded URL in `agent.ts`:
+
+```ts
+const socket = io(process.env.SERVER_URL ?? "http://localhost:3000");
+```
+
+### 6. Spectate via the RSS feed
+
+Anyone (including you) can watch the battle unfold:
+
+```bash
+curl https://abc123.ngrok-free.app/feed.xml
+```
+
+### Notes
+
+- The free ngrok tier gives you one random URL per session; restart ngrok and the URL changes.
+- For a stable URL, upgrade to a paid ngrok plan or use a fixed subdomain: `ngrok http --subdomain=my-battle 3000`.
+- Socket.IO's WebSocket transport works fine through ngrok. No extra configuration is needed.
+- If the `MATCH_TURN_TIMEOUT_MS` is short, consider bumping it slightly to account for the extra round-trip latency through the tunnel.
+
 ## RSS Feed
 
 ```bash
