@@ -1,262 +1,53 @@
 # Agent Battle
 
-A turn-based AI agent battle simulator. Two agents connect over WebSocket and fight each other in a text-based RPG battle. A Claude Sonnet GM adjudicates each turn via OpenRouter and narrates the outcome. A public RSS feed at `/feed.xml` lets anyone spectate live matches.
+Turn-based AI agent battle simulator. Two agents connect over WebSocket and fight; a Claude GM adjudicates each turn via OpenRouter. RSS feed at `/feed.xml` for spectating.
 
 ## Quick Start
 
 ```bash
 cp .env.example .env
-# Edit .env — add your OPENROUTER_API_KEY and REDIS_URL
+# Add OPENROUTER_API_KEY and REDIS_URL to .env
 npm install
 npm run dev
 ```
 
-Requires: **Node 20+**, **Redis** running locally (or set `REDIS_URL`).
+Requires **Node 20+** and **Redis** (`redis://localhost:6379` or set `REDIS_URL`).
 
-```
-[Server] Agent Battle listening on port 3000
-[Redis] Connected
-```
+## Environment
 
-## Environment Variables
+| Variable             | Description                       |
+| -------------------- | --------------------------------- |
+| `OPENROUTER_API_KEY` | Required for GM                   |
+| `REDIS_URL`          | Default: `redis://localhost:6379` |
+| `PORT`               | Default: `3000`                   |
 
-| Variable                | Default                  | Description                        |
-| ----------------------- | ------------------------ | ---------------------------------- |
-| `OPENROUTER_API_KEY`    | —                        | Your OpenRouter API key (required) |
-| `REDIS_URL`             | `redis://localhost:6379` | Redis connection string            |
-| `PORT`                  | `3000`                   | HTTP server port                   |
-| `MATCH_TURN_TIMEOUT_MS` | `30000`                  | Milliseconds per turn              |
-| `MAX_TURNS`             | `50`                     | Max turns before draw              |
+## Running Agents
 
-## Scripts
+The agent in `scripts/agent.ts` uses AI (via OpenRouter) to decide its actions. Run two terminals:
+
+**Terminal 1** — create a match (no `--match-id`):
 
 ```bash
-npm run dev    # tsx watch — hot reload
-npm run build  # tsc → dist/
-npm run start  # node dist/index.js
+npx tsx scripts/agent.ts --name Gandalf --class mage \
+  --persona "You are a wise archmage. Favour lightning and illusions."
 ```
 
-## Example Agent
+Copy the `match_id` printed in the output.
 
-Save as `agent.ts`, install `socket.io-client`, then run two terminals:
+**Terminal 2** — join that match:
 
 ```bash
-# Terminal 1 — creates room
-AGENT_NAME=Gandalf npx tsx agent.ts
-
-# Terminal 2 — joins with the matchId printed in terminal 1
-AGENT_NAME=Sauron MATCH_ID=<matchId> npx tsx agent.ts
+npx tsx scripts/agent.ts --name Sauron --class warrior --match-id <paste-id-here> \
+  --persona "You are a dark overlord. Attack relentlessly."
 ```
 
-```ts
-import { io } from "socket.io-client";
+| Flag         | Description                          |
+| ------------ | ------------------------------------ |
+| `--name`     | Display name                         |
+| `--class`    | `warrior` \| `mage` \| `rogue`       |
+| `--persona`  | System prompt for AI personality     |
+| `--match-id` | Join existing match (omit to create) |
+| `--url`      | Server URL (default: localhost:3000) |
+| `--help`     | Show all options                     |
 
-const ACTIONS = [
-  "I hurl a fireball at my opponent!",
-  "I cast a shield of arcane energy!",
-  "I teleport behind the enemy and strike!",
-  "I channel lightning through my staff!",
-  "I summon a wall of force to block the attack.",
-];
-
-const socket = io("http://localhost:3000");
-
-socket.on("connect", () => {
-  console.log(`Connected as ${process.env.AGENT_NAME ?? "Bot"}`);
-  socket.emit("JOIN_MATCH", {
-    agentName: process.env.AGENT_NAME ?? "Bot",
-    character: "mage",
-    matchId: process.env.MATCH_ID, // omit to create a new room
-  });
-});
-
-socket.on("MATCH_CREATED", (d: { matchId: string }) => {
-  console.log("Match ID:", d.matchId, "← share this with your opponent");
-});
-
-socket.on("WAITING_FOR_OPPONENT", () => {
-  console.log("Waiting for opponent to join…");
-});
-
-socket.on(
-  "MATCH_START",
-  (d: {
-    opponentName: string;
-    yourHp: number;
-    opponentHp: number;
-    yourCharacter: string;
-    opponentCharacter: string;
-  }) => {
-    console.log(
-      `Fight! You are a ${d.yourCharacter} (${d.yourHp} HP) vs ${d.opponentName} the ${d.opponentCharacter} (${d.opponentHp} HP)`
-    );
-  }
-);
-
-socket.on(
-  "YOUR_TURN",
-  (d: {
-    turn: number;
-    state: { hpSelf: number; hpOpponent: number };
-    deadline: number;
-  }) => {
-    const action = ACTIONS[Math.floor(Math.random() * ACTIONS.length)];
-    const timeLeft = Math.round((d.deadline - Date.now()) / 1000);
-    console.log(
-      `\nTurn ${d.turn} | My HP: ${d.state.hpSelf} | Opponent HP: ${d.state.hpOpponent} | ${timeLeft}s left`
-    );
-    console.log(`Action: ${action}`);
-    socket.emit("ACTION", { payload: action });
-  }
-);
-
-socket.on(
-  "TURN_RESULT",
-  (d: {
-    turn: number;
-    narrative: string;
-    state: { hpA: number; hpB: number };
-  }) => {
-    console.log(`\n${d.narrative}`);
-    console.log(`HP — A: ${d.state.hpA} | B: ${d.state.hpB}`);
-  }
-);
-
-socket.on("MATCH_OVER", (d: { winner: string; finalNarrative: string }) => {
-  console.log(`\n--- MATCH OVER ---`);
-  console.log(d.finalNarrative);
-  console.log(`Winner: ${d.winner}`);
-  socket.disconnect();
-  process.exit(0);
-});
-
-socket.on("ERROR", (d: { message: string }) => {
-  console.error("Error:", d.message);
-});
-```
-
-## Playing with Friends via ngrok
-
-By default the server only listens on `localhost`. Use [ngrok](https://ngrok.com/) to create a free public tunnel so friends can connect their agents from anywhere.
-
-### 1. Install ngrok
-
-```bash
-# macOS
-brew install ngrok
-
-# Linux / Windows — download from https://ngrok.com/download
-# or via npm:
-npm install -g ngrok
-```
-
-### 2. Sign up and authenticate (free tier is enough)
-
-```bash
-ngrok config add-authtoken <your-token>
-```
-
-Get your token at <https://dashboard.ngrok.com/get-started/your-authtoken>.
-
-### 3. Start your Agent Battle server
-
-```bash
-npm run dev
-# Server is now listening on port 3000
-```
-
-### 4. Open the tunnel in a second terminal
-
-```bash
-ngrok http 3000
-```
-
-ngrok prints a forwarding URL like:
-
-```
-Forwarding   https://abc123.ngrok-free.app -> http://localhost:3000
-```
-
-### 5. Share the URL with your friends
-
-Send them the `https://…ngrok-free.app` URL. They update their agent to point at it instead of `localhost`:
-
-```bash
-SERVER_URL=https://abc123.ngrok-free.app AGENT_NAME=Gandalf npx tsx agent.ts
-```
-
-Or patch the hardcoded URL in `agent.ts`:
-
-```ts
-const socket = io(process.env.SERVER_URL ?? "http://localhost:3000");
-```
-
-### 6. Spectate via the RSS feed
-
-Anyone (including you) can watch the battle unfold:
-
-```bash
-curl https://abc123.ngrok-free.app/feed.xml
-```
-
-### Notes
-
-- The free ngrok tier gives you one random URL per session; restart ngrok and the URL changes.
-- For a stable URL, upgrade to a paid ngrok plan or use a fixed subdomain: `ngrok http --subdomain=my-battle 3000`.
-- Socket.IO's WebSocket transport works fine through ngrok. No extra configuration is needed.
-- If the `MATCH_TURN_TIMEOUT_MS` is short, consider bumping it slightly to account for the extra round-trip latency through the tunnel.
-
-## RSS Feed
-
-```bash
-curl http://localhost:3000/feed.xml
-```
-
-Returns RSS 2.0, latest 50 battle events (turn narratives + match results), newest first. Refreshes every minute (`<ttl>1</ttl>`).
-
-## WebSocket Events
-
-### Client → Server
-
-| Event        | Payload                              | Description             |
-| ------------ | ------------------------------------ | ----------------------- |
-| `JOIN_MATCH` | `{ agentName, character, matchId? }` | Create or join a match  |
-| `ACTION`     | `{ payload: string }`                | Submit your turn action |
-
-### Server → Client
-
-| Event                  | Payload                                                                           | Description                         |
-| ---------------------- | --------------------------------------------------------------------------------- | ----------------------------------- |
-| `MATCH_CREATED`        | `{ matchId }`                                                                     | Match created (sent to both agents) |
-| `WAITING_FOR_OPPONENT` | `{ matchId }`                                                                     | Waiting for second agent            |
-| `MATCH_START`          | `{ matchId, opponentName, yourHp, opponentHp, yourCharacter, opponentCharacter }` | Match begins                        |
-| `YOUR_TURN`            | `{ turn, state: { hpSelf, hpOpponent }, deadline }`                               | Your turn to act (30s)              |
-| `TURN_RESULT`          | `{ turn, narrative, state: { hpA, hpB } }`                                        | GM narration + updated HP           |
-| `MATCH_OVER`           | `{ winner, finalNarrative }`                                                      | Match ended                         |
-| `ERROR`                | `{ message }`                                                                     | Protocol error                      |
-
-## Character Classes
-
-| Class   | HP  | Damage | Notes             |
-| ------- | --- | ------ | ----------------- |
-| warrior | 150 | 10–25  | Physical, tanky   |
-| mage    | 80  | 15–35  | High magic damage |
-| rogue   | 100 | 12–28  | Bonus hit chance  |
-
-## Redis Keys
-
-```
-battle:match:{matchId}        Hash — match state
-battle:match:{matchId}:turns  List — turn records (JSON)
-battle:matches:active         Set  — active match IDs
-battle:feed                   List — RSS feed items (capped at 200)
-```
-
-All `battle:match:*` keys have a 3-hour TTL.
-
-## Health Check
-
-```bash
-curl http://localhost:3000/health
-# {"status":"ok","time":"2026-03-15T10:00:00.000Z"}
-```
+For remote play, expose port 3000 with [ngrok](https://ngrok.com/) and pass `--url https://your-tunnel.ngrok-free.app`.
