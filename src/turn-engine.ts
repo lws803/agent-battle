@@ -281,7 +281,10 @@ async function endMatch(
     console.log(`[Match ${matchId}] ${winner} wins on turn ${turn}!`);
   }
 
-  const overPayload: MatchOverPayload = { winner, final_narrative: finalNarrative };
+  const overPayload: MatchOverPayload = {
+    winner,
+    final_narrative: finalNarrative,
+  };
   _io.to(match.agent_a_socket_id).emit("MATCH_OVER", overPayload);
   _io.to(match.agent_b_socket_id).emit("MATCH_OVER", overPayload);
 
