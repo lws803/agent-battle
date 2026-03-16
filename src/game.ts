@@ -1,14 +1,20 @@
-import redis from "./redis.js";
+import redis from "./redis";
 import {
   Match,
   MatchStatus,
-  CharacterClass,
-  TurnRecord,
   FeedItem,
   REDIS_KEYS,
   MATCH_TTL_SECONDS,
   FEED_CAP,
-} from "./types.js";
+} from "./types";
+import { CLASS_IDS, isValidClass } from "./config";
+
+const DEFAULT_CHARACTER = CLASS_IDS[0];
+
+function toValidCharacter(raw: string | undefined): string {
+  const val = raw ?? "";
+  return isValidClass(val) ? val : DEFAULT_CHARACTER;
+}
 
 // ─── Hash serialization ───────────────────────────────────────────────────────
 
@@ -28,16 +34,13 @@ function matchFromHash(h: Record<string, string>): Match {
     agent_b_name: h["agent_b_name"] ?? "",
     agent_a_socket_id: h["agent_a_socket_id"] ?? "",
     agent_b_socket_id: h["agent_b_socket_id"] ?? "",
-    character_a: (h["character_a"] ?? "warrior") as CharacterClass,
-    character_b: (h["character_b"] ?? "warrior") as CharacterClass,
+    character_a: toValidCharacter(h["character_a"]),
+    character_b: toValidCharacter(h["character_b"]),
     current_turn: parseInt(h["current_turn"] ?? "0", 10),
     hp_a: parseInt(h["hp_a"] ?? "0", 10),
     hp_b: parseInt(h["hp_b"] ?? "0", 10),
     action_a: h["action_a"] ?? "",
     action_b: h["action_b"] ?? "",
-    created_at: h["created_at"] ?? "",
-    started_at: h["started_at"] ?? "",
-    ended_at: h["ended_at"] ?? "",
   };
 }
 
@@ -46,11 +49,10 @@ function matchFromHash(h: Record<string, string>): Match {
 export async function createMatch(
   agentAName: string,
   agentASocketId: string,
-  characterA: CharacterClass
+  characterA: string
 ): Promise<Match | null> {
   try {
     const id = crypto.randomUUID().replace(/-/g, "").slice(0, 8);
-    const now = new Date().toISOString();
     const match: Match = {
       id,
       status: "waiting",
@@ -59,15 +61,12 @@ export async function createMatch(
       character_a: characterA,
       agent_b_name: "",
       agent_b_socket_id: "",
-      character_b: "warrior",
+      character_b: DEFAULT_CHARACTER,
       current_turn: 0,
       hp_a: 0,
       hp_b: 0,
       action_a: "",
       action_b: "",
-      created_at: now,
-      started_at: "",
-      ended_at: "",
     };
     const key = REDIS_KEYS.match(id);
     await redis.hset(key, matchToHash(match));
@@ -102,21 +101,6 @@ export async function updateMatch(
     return true;
   } catch (err) {
     console.error("[game.updateMatch] Error:", err);
-    return false;
-  }
-}
-
-export async function pushTurnRecord(
-  matchId: string,
-  record: TurnRecord
-): Promise<boolean> {
-  try {
-    const key = REDIS_KEYS.turns(matchId);
-    await redis.rpush(key, JSON.stringify(record));
-    await redis.expire(key, MATCH_TTL_SECONDS);
-    return true;
-  } catch (err) {
-    console.error("[game.pushTurnRecord] Error:", err);
     return false;
   }
 }

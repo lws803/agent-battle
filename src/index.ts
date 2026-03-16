@@ -1,47 +1,44 @@
-import 'dotenv/config';
-import express from 'express';
-import { createServer } from 'http';
-import { Server as SocketIOServer } from 'socket.io';
-import {
-  JoinMatchPayload,
-  ActionPayload,
-  CHARACTER_STATS,
-} from './types.js';
-import { createMatch, getMatch, updateMatch } from './game.js';
+import "dotenv/config";
+import express from "express";
+import { createServer } from "http";
+import { Server as SocketIOServer } from "socket.io";
+
+import { JoinMatchPayload, ActionPayload } from "./types";
+import { isValidClass, CLASS_IDS } from "./config";
+import { createMatch, getMatch, updateMatch } from "./game";
 import {
   registerTurnEngine,
   startMatch,
   receiveAction,
   handleDisconnect,
-} from './turn-engine.js';
-import { buildRssFeed } from './feed-service.js';
+} from "./turn-engine";
+import { buildRssFeed } from "./feed-service";
 
 // ─── App setup ────────────────────────────────────────────────────────────────
 
 const app = express();
-app.use(express.json());
 
 const httpServer = createServer(app);
 const io = new SocketIOServer(httpServer, {
-  cors: { origin: '*' },
+  cors: { origin: "*" },
 });
 
 registerTurnEngine(io);
 
 // ─── HTTP routes ──────────────────────────────────────────────────────────────
 
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', time: new Date().toISOString() });
+app.get("/health", (_req, res) => {
+  res.json({ status: "ok", time: new Date().toISOString() });
 });
 
-app.get('/feed.xml', async (_req, res) => {
+app.get("/feed.xml", async (_req, res) => {
   try {
     const xml = await buildRssFeed();
-    res.setHeader('Content-Type', 'application/rss+xml; charset=utf-8');
+    res.setHeader("Content-Type", "application/rss+xml; charset=utf-8");
     res.send(xml);
   } catch (err) {
-    console.error('[feed] Error building RSS:', err);
-    res.status(500).send('Feed unavailable');
+    console.error("[feed] Error building RSS:", err);
+    res.status(500).send("Feed unavailable");
   }
 });
 
@@ -50,21 +47,23 @@ app.get('/feed.xml', async (_req, res) => {
 // socketId → matchId for fast disconnect lookup
 const socketToMatch = new Map<string, string>();
 
-io.on('connection', (socket) => {
+io.on("connection", (socket) => {
   console.log(`[Socket] Connected: ${socket.id}`);
 
-  socket.on('JOIN_MATCH', async (payload: JoinMatchPayload) => {
+  socket.on("JOIN_MATCH", async (payload: JoinMatchPayload) => {
     try {
       const { match_id, agent_name, character } = payload;
 
-      if (!agent_name || agent_name.trim() === '') {
-        socket.emit('ERROR', { message: 'agent_name is required.' });
+      if (!agent_name || agent_name.trim() === "") {
+        socket.emit("ERROR", { message: "agent_name is required." });
         return;
       }
 
-      if (!CHARACTER_STATS[character]) {
-        socket.emit('ERROR', {
-          message: `Invalid character "${character}". Choose: warrior, mage, rogue.`,
+      if (!isValidClass(character)) {
+        socket.emit("ERROR", {
+          message: `Invalid character "${character}". Choose: ${CLASS_IDS.join(
+            ", "
+          )}.`,
         });
         return;
       }
@@ -73,11 +72,13 @@ io.on('connection', (socket) => {
       if (match_id) {
         const existing = await getMatch(match_id);
         if (!existing) {
-          socket.emit('ERROR', { message: `Match ${match_id} not found.` });
+          socket.emit("ERROR", { message: `Match ${match_id} not found.` });
           return;
         }
-        if (existing.status !== 'waiting') {
-          socket.emit('ERROR', { message: `Match ${match_id} is not open for joining.` });
+        if (existing.status !== "waiting") {
+          socket.emit("ERROR", {
+            message: `Match ${match_id} is not open for joining.`,
+          });
           return;
         }
 
@@ -90,60 +91,65 @@ io.on('connection', (socket) => {
         socketToMatch.set(socket.id, match_id);
         socketToMatch.set(existing.agent_a_socket_id, match_id);
 
-        socket.emit('MATCH_CREATED', { match_id });
+        socket.emit("MATCH_CREATED", { match_id });
         await startMatch(match_id);
         return;
       }
 
       // ── Create a new match ──
-      const newMatch = await createMatch(agent_name.trim(), socket.id, character);
+      const newMatch = await createMatch(
+        agent_name.trim(),
+        socket.id,
+        character
+      );
       if (!newMatch) {
-        socket.emit('ERROR', { message: 'Failed to create match. Try again.' });
+        socket.emit("ERROR", { message: "Failed to create match. Try again." });
         return;
       }
 
       socketToMatch.set(socket.id, newMatch.id);
-      socket.emit('MATCH_CREATED', { match_id: newMatch.id });
-      socket.emit('WAITING_FOR_OPPONENT', { match_id: newMatch.id });
-
+      socket.emit("MATCH_CREATED", { match_id: newMatch.id });
+      socket.emit("WAITING_FOR_OPPONENT", { match_id: newMatch.id });
     } catch (err) {
-      console.error('[JOIN_MATCH] Error:', err);
-      socket.emit('ERROR', { message: 'Internal server error during JOIN_MATCH.' });
+      console.error("[JOIN_MATCH] Error:", err);
+      socket.emit("ERROR", {
+        message: "Internal server error during JOIN_MATCH.",
+      });
     }
   });
 
-  socket.on('ACTION', async (payload: ActionPayload) => {
+  socket.on("ACTION", async (payload: ActionPayload) => {
     try {
       const matchId = socketToMatch.get(socket.id);
       if (!matchId) {
-        socket.emit('ERROR', { message: 'You are not in a match.' });
+        socket.emit("ERROR", { message: "You are not in a match." });
         return;
       }
 
       const match = await getMatch(matchId);
-      if (!match || match.status !== 'active') {
-        socket.emit('ERROR', { message: 'No active match to act in.' });
+      if (!match || match.status !== "active") {
+        socket.emit("ERROR", { message: "No active match to act in." });
         return;
       }
 
-      await receiveAction(matchId, socket.id, payload.payload ?? '');
+      await receiveAction(matchId, socket.id, payload.payload ?? "");
     } catch (err) {
-      console.error('[ACTION] Error:', err);
-      socket.emit('ERROR', { message: 'Internal server error during ACTION.' });
+      console.error("[ACTION] Error:", err);
+      socket.emit("ERROR", { message: "Internal server error during ACTION." });
     }
   });
 
-  socket.on('disconnect', async () => {
+  socket.on("disconnect", async () => {
     console.log(`[Socket] Disconnected: ${socket.id}`);
     const matchId = socketToMatch.get(socket.id);
     if (matchId) {
       try {
         const match = await getMatch(matchId);
-        if (match?.status === 'active') {
+        if (match?.status === "active") {
           handleDisconnect(socket.id, matchId);
         }
       } catch (err) {
-        console.error('[disconnect] Error:', err);
+        console.error("[disconnect] Error:", err);
       }
       socketToMatch.delete(socket.id);
     }
@@ -152,7 +158,7 @@ io.on('connection', (socket) => {
 
 // ─── Start server ─────────────────────────────────────────────────────────────
 
-const PORT = parseInt(process.env.PORT ?? '3000', 10);
+const PORT = parseInt(process.env.PORT ?? "3000", 10);
 httpServer.listen(PORT, () => {
   console.log(`[Server] Agent Battle listening on port ${PORT}`);
 });

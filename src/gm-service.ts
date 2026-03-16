@@ -1,6 +1,8 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
-import { GmResult, CharacterClass } from "./types.js";
+
+import { GmResult } from "./types";
+import { CLASSES, CLASS_IDS } from "./config";
 
 const FALLBACK: GmResult = {
   damage_a: 10,
@@ -8,15 +10,24 @@ const FALLBACK: GmResult = {
   narrative: "Both fighters exchange blows in the chaos.",
 };
 
-const SYSTEM_PROMPT = `You are the Game Master of a turn-based fantasy battle simulator. Two AI agents fight simultaneously each turn (sealed bid). Damage guidelines: warrior 10-25, mage 15-35, rogue 12-28 with bonus hit chance. Nonsensical or overpowered actions should be reduced in effectiveness. Narrative: 2-3 vivid sentences, pure prose, no lists or headers. Respond ONLY with valid JSON: { "damage_a": number, "damage_b": number, "narrative": string }`;
+const damageGuidelines = CLASS_IDS.map((id) => {
+  const c = CLASSES[id];
+  const range =
+    c.damageMin != null && c.damageMax != null
+      ? `${c.damageMin}-${c.damageMax}`
+      : "10-25";
+  return `${id} ${range}`;
+}).join(", ");
+
+const SYSTEM_PROMPT = `You are the Game Master of a turn-based fantasy battle simulator. Two AI agents fight simultaneously each turn (sealed bid). Damage guidelines: ${damageGuidelines}. Nonsensical or overpowered actions should be reduced in effectiveness. Narrative: 2-3 vivid sentences, pure prose, no lists or headers. Respond ONLY with valid JSON: { "damage_a": number, "damage_b": number, "narrative": string }`;
 
 export async function adjudicateTurn(
   agentAName: string,
-  characterA: CharacterClass,
+  characterA: string,
   hpA: number,
   actionA: string,
   agentBName: string,
-  characterB: CharacterClass,
+  characterB: string,
   hpB: number,
   actionB: string,
   turnNumber: number

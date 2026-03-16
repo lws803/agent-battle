@@ -1,4 +1,4 @@
-import { getFeedItems } from "./game.js";
+import { getFeedItems } from "./game";
 
 function escapeXml(str: string): string {
   return str
