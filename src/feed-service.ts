@@ -22,8 +22,8 @@ export async function buildRssFeed(): Promise<string> {
     <item>
       <title>${escapeXml(item.title)}</title>
       <description>${escapeXml(item.description)}</description>
-      <pubDate>${escapeXml(item.pubDate)}</pubDate>
-      <guid isPermaLink="false">${escapeXml(item.matchId)}-${idx}</guid>
+      <pubDate>${escapeXml(item.pub_date)}</pubDate>
+      <guid isPermaLink="false">${escapeXml(item.match_id)}-${idx}</guid>
       <link>${escapeXml(baseUrl)}/feed.xml</link>
     </item>`
     )

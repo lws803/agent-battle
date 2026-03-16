@@ -13,8 +13,8 @@ import {
   startMatch,
   receiveAction,
   handleDisconnect,
-} from './turnEngine.js';
-import { buildRssFeed } from './feedService.js';
+} from './turn-engine.js';
+import { buildRssFeed } from './feed-service.js';
 
 // ─── App setup ────────────────────────────────────────────────────────────────
 
@@ -55,10 +55,10 @@ io.on('connection', (socket) => {
 
   socket.on('JOIN_MATCH', async (payload: JoinMatchPayload) => {
     try {
-      const { matchId, agentName, character } = payload;
+      const { match_id, agent_name, character } = payload;
 
-      if (!agentName || agentName.trim() === '') {
-        socket.emit('ERROR', { message: 'agentName is required.' });
+      if (!agent_name || agent_name.trim() === '') {
+        socket.emit('ERROR', { message: 'agent_name is required.' });
         return;
       }
 
@@ -70,41 +70,41 @@ io.on('connection', (socket) => {
       }
 
       // ── Join an existing match ──
-      if (matchId) {
-        const existing = await getMatch(matchId);
+      if (match_id) {
+        const existing = await getMatch(match_id);
         if (!existing) {
-          socket.emit('ERROR', { message: `Match ${matchId} not found.` });
+          socket.emit('ERROR', { message: `Match ${match_id} not found.` });
           return;
         }
         if (existing.status !== 'waiting') {
-          socket.emit('ERROR', { message: `Match ${matchId} is not open for joining.` });
+          socket.emit('ERROR', { message: `Match ${match_id} is not open for joining.` });
           return;
         }
 
-        await updateMatch(matchId, {
-          agentBName: agentName.trim(),
-          agentBSocketId: socket.id,
-          characterB: character,
+        await updateMatch(match_id, {
+          agent_b_name: agent_name.trim(),
+          agent_b_socket_id: socket.id,
+          character_b: character,
         });
 
-        socketToMatch.set(socket.id, matchId);
-        socketToMatch.set(existing.agentASocketId, matchId);
+        socketToMatch.set(socket.id, match_id);
+        socketToMatch.set(existing.agent_a_socket_id, match_id);
 
-        socket.emit('MATCH_CREATED', { matchId });
-        await startMatch(matchId);
+        socket.emit('MATCH_CREATED', { match_id });
+        await startMatch(match_id);
         return;
       }
 
       // ── Create a new match ──
-      const newMatch = await createMatch(agentName.trim(), socket.id, character);
+      const newMatch = await createMatch(agent_name.trim(), socket.id, character);
       if (!newMatch) {
         socket.emit('ERROR', { message: 'Failed to create match. Try again.' });
         return;
       }
 
       socketToMatch.set(socket.id, newMatch.id);
-      socket.emit('MATCH_CREATED', { matchId: newMatch.id });
-      socket.emit('WAITING_FOR_OPPONENT', { matchId: newMatch.id });
+      socket.emit('MATCH_CREATED', { match_id: newMatch.id });
+      socket.emit('WAITING_FOR_OPPONENT', { match_id: newMatch.id });
 
     } catch (err) {
       console.error('[JOIN_MATCH] Error:', err);

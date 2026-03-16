@@ -18,7 +18,7 @@ import {
   pushFeedItem,
   removeActiveMatch,
 } from "./game.js";
-import { adjudicateTurn } from "./gmService.js";
+import { adjudicateTurn } from "./gm-service.js";
 
 // ─── In-memory turn state ─────────────────────────────────────────────────────
 
@@ -41,35 +41,35 @@ export async function startMatch(matchId: string): Promise<void> {
   const match = await getMatch(matchId);
   if (!match) return;
 
-  const hpA = CHARACTER_STATS[match.characterA].hp;
-  const hpB = CHARACTER_STATS[match.characterB].hp;
+  const hpA = CHARACTER_STATS[match.character_a].hp;
+  const hpB = CHARACTER_STATS[match.character_b].hp;
 
   await updateMatch(matchId, {
     status: "active",
-    hpA,
-    hpB,
-    currentTurn: 1,
-    startedAt: new Date().toISOString(),
+    hp_a: hpA,
+    hp_b: hpB,
+    current_turn: 1,
+    started_at: new Date().toISOString(),
   });
 
   const updated = await getMatch(matchId);
   if (!updated) return;
 
-  _io.to(updated.agentASocketId).emit("MATCH_START", {
-    matchId,
-    opponentName: updated.agentBName,
-    yourHp: hpA,
-    opponentHp: hpB,
-    yourCharacter: updated.characterA,
-    opponentCharacter: updated.characterB,
+  _io.to(updated.agent_a_socket_id).emit("MATCH_START", {
+    match_id: matchId,
+    opponent_name: updated.agent_b_name,
+    your_hp: hpA,
+    opponent_hp: hpB,
+    your_character: updated.character_a,
+    opponent_character: updated.character_b,
   });
-  _io.to(updated.agentBSocketId).emit("MATCH_START", {
-    matchId,
-    opponentName: updated.agentAName,
-    yourHp: hpB,
-    opponentHp: hpA,
-    yourCharacter: updated.characterB,
-    opponentCharacter: updated.characterA,
+  _io.to(updated.agent_b_socket_id).emit("MATCH_START", {
+    match_id: matchId,
+    opponent_name: updated.agent_a_name,
+    your_hp: hpB,
+    opponent_hp: hpA,
+    your_character: updated.character_b,
+    opponent_character: updated.character_a,
   });
 
   activeTurns.set(matchId, {
@@ -86,28 +86,28 @@ async function beginTurn(matchId: string): Promise<void> {
   if (!match || match.status !== "active") return;
 
   // Clear actions for the new turn
-  await updateMatch(matchId, { actionA: "", actionB: "" });
+  await updateMatch(matchId, { action_a: "", action_b: "" });
 
   const deadline = Date.now() + TURN_TIMEOUT_MS;
 
   console.log(
-    `[Match ${matchId}] Turn ${match.currentTurn} started — ` +
-      `${match.agentAName} (${match.characterA}) vs ${match.agentBName} (${match.characterB})`
+    `[Match ${matchId}] Turn ${match.current_turn} started — ` +
+      `${match.agent_a_name} (${match.character_a}) vs ${match.agent_b_name} (${match.character_b})`
   );
 
   const payloadA: YourTurnPayload = {
-    turn: match.currentTurn,
-    state: { hpSelf: match.hpA, hpOpponent: match.hpB },
+    turn: match.current_turn,
+    state: { hp_self: match.hp_a, hp_opponent: match.hp_b },
     deadline,
   };
   const payloadB: YourTurnPayload = {
-    turn: match.currentTurn,
-    state: { hpSelf: match.hpB, hpOpponent: match.hpA },
+    turn: match.current_turn,
+    state: { hp_self: match.hp_b, hp_opponent: match.hp_a },
     deadline,
   };
 
-  _io.to(match.agentASocketId).emit("YOUR_TURN", payloadA);
-  _io.to(match.agentBSocketId).emit("YOUR_TURN", payloadB);
+  _io.to(match.agent_a_socket_id).emit("YOUR_TURN", payloadA);
+  _io.to(match.agent_b_socket_id).emit("YOUR_TURN", payloadB);
 
   const state = activeTurns.get(matchId);
   if (!state) return;
@@ -128,25 +128,25 @@ export async function receiveAction(
   const match = await getMatch(matchId);
   if (!match || match.status !== "active") return;
 
-  const isA = match.agentASocketId === socketId;
-  const isB = match.agentBSocketId === socketId;
+  const isA = match.agent_a_socket_id === socketId;
+  const isB = match.agent_b_socket_id === socketId;
   if (!isA && !isB) return;
 
   // Ignore double-submissions
-  if (isA && match.actionA !== "") return;
-  if (isB && match.actionB !== "") return;
+  if (isA && match.action_a !== "") return;
+  if (isB && match.action_b !== "") return;
 
   const truncated = action.slice(0, 500);
 
   if (isA) {
-    await updateMatch(matchId, { actionA: truncated });
+    await updateMatch(matchId, { action_a: truncated });
   } else {
-    await updateMatch(matchId, { actionB: truncated });
+    await updateMatch(matchId, { action_b: truncated });
   }
 
   // Re-fetch to check if both actions are now in
   const refreshed = await getMatch(matchId);
-  if (refreshed && refreshed.actionA !== "" && refreshed.actionB !== "") {
+  if (refreshed && refreshed.action_a !== "" && refreshed.action_b !== "") {
     const state = activeTurns.get(matchId);
     if (state?.actionTimer) {
       clearTimeout(state.actionTimer);
@@ -163,66 +163,66 @@ async function resolveTurn(matchId: string): Promise<void> {
   if (!match || match.status !== "active") return;
 
   const actionA =
-    match.actionA || `${match.agentAName} hesitates, doing nothing.`;
+    match.action_a || `${match.agent_a_name} hesitates, doing nothing.`;
   const actionB =
-    match.actionB || `${match.agentBName} hesitates, doing nothing.`;
+    match.action_b || `${match.agent_b_name} hesitates, doing nothing.`;
 
   const gm = await adjudicateTurn(
-    match.agentAName,
-    match.characterA,
-    match.hpA,
+    match.agent_a_name,
+    match.character_a,
+    match.hp_a,
     actionA,
-    match.agentBName,
-    match.characterB,
-    match.hpB,
+    match.agent_b_name,
+    match.character_b,
+    match.hp_b,
     actionB,
-    match.currentTurn
+    match.current_turn
   );
 
-  const newHpA = Math.max(0, match.hpA - gm.damageA);
-  const newHpB = Math.max(0, match.hpB - gm.damageB);
+  const newHpA = Math.max(0, match.hp_a - gm.damage_a);
+  const newHpB = Math.max(0, match.hp_b - gm.damage_b);
 
   const turnRecord: TurnRecord = {
-    turnNumber: match.currentTurn,
-    actionA,
-    actionB,
+    turn_number: match.current_turn,
+    action_a: actionA,
+    action_b: actionB,
     narrative: gm.narrative,
-    hpA: newHpA,
-    hpB: newHpB,
+    hp_a: newHpA,
+    hp_b: newHpB,
     timestamp: new Date().toISOString(),
   };
 
   await pushTurnRecord(matchId, turnRecord);
   await updateMatch(matchId, {
-    hpA: newHpA,
-    hpB: newHpB,
-    actionA: "",
-    actionB: "",
+    hp_a: newHpA,
+    hp_b: newHpB,
+    action_a: "",
+    action_b: "",
   });
 
   console.log(
-    `[Match ${matchId}] Turn ${match.currentTurn} done | ` +
-      `${match.agentAName}: ${newHpA} HP | ${match.agentBName}: ${newHpB} HP`
+    `[Match ${matchId}] Turn ${match.current_turn} done | ` +
+      `${match.agent_a_name}: ${newHpA} HP | ${match.agent_b_name}: ${newHpB} HP`
   );
 
   const resultPayload: TurnResultPayload = {
-    turn: match.currentTurn,
+    turn: match.current_turn,
     narrative: gm.narrative,
-    state: { hpA: newHpA, hpB: newHpB },
+    state: { hp_a: newHpA, hp_b: newHpB },
   };
 
-  _io.to(match.agentASocketId).emit("TURN_RESULT", resultPayload);
-  _io.to(match.agentBSocketId).emit("TURN_RESULT", resultPayload);
+  _io.to(match.agent_a_socket_id).emit("TURN_RESULT", resultPayload);
+  _io.to(match.agent_b_socket_id).emit("TURN_RESULT", resultPayload);
 
   const feedItem: FeedItem = {
-    title: `Turn ${match.currentTurn}: ${match.agentAName} vs ${match.agentBName}`,
+    title: `Turn ${match.current_turn}: ${match.agent_a_name} vs ${match.agent_b_name}`,
     description: gm.narrative,
-    matchId,
-    pubDate: new Date().toUTCString(),
+    match_id: matchId,
+    pub_date: new Date().toUTCString(),
   };
   await pushFeedItem(feedItem);
 
-  const turnLimitReached = match.currentTurn >= MAX_TURNS;
+  const turnLimitReached = match.current_turn >= MAX_TURNS;
   const aDefeated = newHpA <= 0;
   const bDefeated = newHpB <= 0;
 
@@ -231,12 +231,12 @@ async function resolveTurn(matchId: string): Promise<void> {
       matchId,
       newHpA,
       newHpB,
-      match.currentTurn,
+      match.current_turn,
       turnLimitReached,
       gm.narrative
     );
   } else {
-    await updateMatch(matchId, { currentTurn: match.currentTurn + 1 });
+    await updateMatch(matchId, { current_turn: match.current_turn + 1 });
     await beginTurn(matchId);
   }
 }
@@ -261,14 +261,14 @@ async function endMatch(
     winner = "draw";
     status = "draw";
   } else if (hpA <= 0) {
-    winner = match.agentBName;
+    winner = match.agent_b_name;
     status = "completed";
   } else {
-    winner = match.agentAName;
+    winner = match.agent_a_name;
     status = "completed";
   }
 
-  await updateMatch(matchId, { status, endedAt: new Date().toISOString() });
+  await updateMatch(matchId, { status, ended_at: new Date().toISOString() });
   await removeActiveMatch(matchId);
 
   const state = activeTurns.get(matchId);
@@ -281,17 +281,20 @@ async function endMatch(
     console.log(`[Match ${matchId}] ${winner} wins on turn ${turn}!`);
   }
 
-  const overPayload: MatchOverPayload = { winner, finalNarrative };
-  _io.to(match.agentASocketId).emit("MATCH_OVER", overPayload);
-  _io.to(match.agentBSocketId).emit("MATCH_OVER", overPayload);
+  const overPayload: MatchOverPayload = {
+    winner,
+    final_narrative: finalNarrative,
+  };
+  _io.to(match.agent_a_socket_id).emit("MATCH_OVER", overPayload);
+  _io.to(match.agent_b_socket_id).emit("MATCH_OVER", overPayload);
 
   await pushFeedItem({
     title: `Match Over: ${winner === "draw" ? "Draw" : `${winner} wins`} — ${
-      match.agentAName
-    } vs ${match.agentBName}`,
+      match.agent_a_name
+    } vs ${match.agent_b_name}`,
     description: finalNarrative,
-    matchId,
-    pubDate: new Date().toUTCString(),
+    match_id: matchId,
+    pub_date: new Date().toUTCString(),
   });
 }
 
@@ -326,19 +329,19 @@ async function forfeitMatch(
   if (!match || match.status !== "active") return;
 
   const forfeitingAgent =
-    match.agentASocketId === forfeitingSocketId
-      ? match.agentAName
-      : match.agentBName;
+    match.agent_a_socket_id === forfeitingSocketId
+      ? match.agent_a_name
+      : match.agent_b_name;
   const winner =
-    match.agentASocketId === forfeitingSocketId
-      ? match.agentBName
-      : match.agentAName;
+    match.agent_a_socket_id === forfeitingSocketId
+      ? match.agent_b_name
+      : match.agent_a_name;
 
   const narrative = `${forfeitingAgent} has disconnected and forfeits the match. ${winner} is victorious!`;
 
   await updateMatch(matchId, {
     status: "forfeited",
-    endedAt: new Date().toISOString(),
+    ended_at: new Date().toISOString(),
   });
   await removeActiveMatch(matchId);
 
@@ -350,14 +353,14 @@ async function forfeitMatch(
     `[Match ${matchId}] ${forfeitingAgent} forfeited. ${winner} wins!`
   );
 
-  const overPayload: MatchOverPayload = { winner, finalNarrative: narrative };
-  _io.to(match.agentASocketId).emit("MATCH_OVER", overPayload);
-  _io.to(match.agentBSocketId).emit("MATCH_OVER", overPayload);
+  const overPayload: MatchOverPayload = { winner, final_narrative: narrative };
+  _io.to(match.agent_a_socket_id).emit("MATCH_OVER", overPayload);
+  _io.to(match.agent_b_socket_id).emit("MATCH_OVER", overPayload);
 
   await pushFeedItem({
-    title: `Match Over: ${winner} wins by forfeit — ${match.agentAName} vs ${match.agentBName}`,
+    title: `Match Over: ${winner} wins by forfeit — ${match.agent_a_name} vs ${match.agent_b_name}`,
     description: narrative,
-    matchId,
-    pubDate: new Date().toUTCString(),
+    match_id: matchId,
+    pub_date: new Date().toUTCString(),
   });
 }
