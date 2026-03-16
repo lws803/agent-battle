@@ -17,7 +17,6 @@ import { buildRssFeed } from "./feed-service";
 // ─── App setup ────────────────────────────────────────────────────────────────
 
 const app = express();
-app.use(express.json());
 
 const httpServer = createServer(app);
 const io = new SocketIOServer(httpServer, {

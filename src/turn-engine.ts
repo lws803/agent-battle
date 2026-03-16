@@ -3,22 +3,14 @@ import { Server as SocketIOServer } from "socket.io";
 import { getClassHp } from "./config";
 import {
   MAX_TURNS,
-  DISCONNECT_GRACE_MS,
   YourTurnPayload,
   TurnResultPayload,
   MatchOverPayload,
-  TurnRecord,
   FeedItem,
   Match,
   TURN_TIMEOUT_MS,
 } from "./types";
-import {
-  getMatch,
-  updateMatch,
-  pushTurnRecord,
-  pushFeedItem,
-  removeActiveMatch,
-} from "./game";
+import { getMatch, updateMatch, pushFeedItem, removeActiveMatch } from "./game";
 import { adjudicateTurn } from "./gm-service";
 
 // ─── In-memory turn state ─────────────────────────────────────────────────────
@@ -26,7 +18,6 @@ import { adjudicateTurn } from "./gm-service";
 interface TurnState {
   matchId: string;
   actionTimer: NodeJS.Timeout | null;
-  disconnectTimers: Map<string, NodeJS.Timeout>;
 }
 
 const activeTurns = new Map<string, TurnState>();
@@ -50,7 +41,6 @@ export async function startMatch(matchId: string): Promise<void> {
     hp_a: hpA,
     hp_b: hpB,
     current_turn: 1,
-    started_at: new Date().toISOString(),
   });
 
   const updated = await getMatch(matchId);
@@ -76,7 +66,6 @@ export async function startMatch(matchId: string): Promise<void> {
   activeTurns.set(matchId, {
     matchId,
     actionTimer: null,
-    disconnectTimers: new Map(),
   });
 
   await beginTurn(matchId);
@@ -183,17 +172,6 @@ async function resolveTurn(matchId: string): Promise<void> {
   const newHpA = Math.max(0, match.hp_a - gm.damage_a);
   const newHpB = Math.max(0, match.hp_b - gm.damage_b);
 
-  const turnRecord: TurnRecord = {
-    turn_number: match.current_turn,
-    action_a: actionA,
-    action_b: actionB,
-    narrative: gm.narrative,
-    hp_a: newHpA,
-    hp_b: newHpB,
-    timestamp: new Date().toISOString(),
-  };
-
-  await pushTurnRecord(matchId, turnRecord);
   await updateMatch(matchId, {
     hp_a: newHpA,
     hp_b: newHpB,
@@ -269,7 +247,7 @@ async function endMatch(
     status = "completed";
   }
 
-  await updateMatch(matchId, { status, ended_at: new Date().toISOString() });
+  await updateMatch(matchId, { status });
   await removeActiveMatch(matchId);
 
   const state = activeTurns.get(matchId);
@@ -302,24 +280,7 @@ async function endMatch(
 // ─── Disconnect handling ──────────────────────────────────────────────────────
 
 export function handleDisconnect(socketId: string, matchId: string): void {
-  const state = activeTurns.get(matchId);
-  if (!state) return;
-
-  const timer = setTimeout(() => {
-    void forfeitMatch(matchId, socketId);
-  }, DISCONNECT_GRACE_MS);
-
-  state.disconnectTimers.set(socketId, timer);
-}
-
-export function handleReconnect(socketId: string, matchId: string): void {
-  const state = activeTurns.get(matchId);
-  if (!state) return;
-  const timer = state.disconnectTimers.get(socketId);
-  if (timer) {
-    clearTimeout(timer);
-    state.disconnectTimers.delete(socketId);
-  }
+  void forfeitMatch(matchId, socketId);
 }
 
 async function forfeitMatch(
@@ -340,10 +301,7 @@ async function forfeitMatch(
 
   const narrative = `${forfeitingAgent} has disconnected and forfeits the match. ${winner} is victorious!`;
 
-  await updateMatch(matchId, {
-    status: "forfeited",
-    ended_at: new Date().toISOString(),
-  });
+  await updateMatch(matchId, { status: "forfeited" });
   await removeActiveMatch(matchId);
 
   const state = activeTurns.get(matchId);

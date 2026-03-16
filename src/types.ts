@@ -25,22 +25,9 @@ export interface Match {
   hp_b: number;
   action_a: string;
   action_b: string;
-  created_at: string;
-  started_at: string;
-  ended_at: string;
 }
 
-// ─── Turn / feed records ──────────────────────────────────────────────────────
-
-export interface TurnRecord {
-  turn_number: number;
-  action_a: string;
-  action_b: string;
-  narrative: string;
-  hp_a: number;
-  hp_b: number;
-  timestamp: string;
-}
+// ─── Feed records ────────────────────────────────────────────────────────────
 
 export interface FeedItem {
   title: string;
@@ -71,23 +58,6 @@ export interface ActionPayload {
 
 // ─── Socket.io payloads — Server → Client ────────────────────────────────────
 
-export interface MatchCreatedPayload {
-  match_id: string;
-}
-
-export interface WaitingForOpponentPayload {
-  match_id: string;
-}
-
-export interface MatchStartPayload {
-  match_id: string;
-  opponent_name: string;
-  your_hp: number;
-  opponent_hp: number;
-  your_character: CharacterClass;
-  opponent_character: CharacterClass;
-}
-
 export interface YourTurnPayload {
   turn: number;
   state: { hp_self: number; hp_opponent: number };
@@ -105,15 +75,10 @@ export interface MatchOverPayload {
   final_narrative: string;
 }
 
-export interface ErrorPayload {
-  message: string;
-}
-
 // ─── Redis key helpers ────────────────────────────────────────────────────────
 
 export const REDIS_KEYS = {
   match: (id: string) => `battle:match:${id}`,
-  turns: (id: string) => `battle:match:${id}:turns`,
   activeMatches: "battle:matches:active",
   feed: "battle:feed",
 };
@@ -127,4 +92,3 @@ export const TURN_TIMEOUT_MS = parseInt(
 );
 export const MAX_TURNS = parseInt(process.env.MAX_TURNS ?? "50", 10);
 export const FEED_CAP = 200;
-export const DISCONNECT_GRACE_MS = 10_000;
