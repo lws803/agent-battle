@@ -1,8 +1,7 @@
 import { Server as SocketIOServer } from "socket.io";
+
+import { getClassHp } from "./config";
 import {
-  Match,
-  CHARACTER_STATS,
-  TURN_TIMEOUT_MS,
   MAX_TURNS,
   DISCONNECT_GRACE_MS,
   YourTurnPayload,
@@ -10,15 +9,17 @@ import {
   MatchOverPayload,
   TurnRecord,
   FeedItem,
-} from "./types.js";
+  Match,
+  TURN_TIMEOUT_MS,
+} from "./types";
 import {
   getMatch,
   updateMatch,
   pushTurnRecord,
   pushFeedItem,
   removeActiveMatch,
-} from "./game.js";
-import { adjudicateTurn } from "./gm-service.js";
+} from "./game";
+import { adjudicateTurn } from "./gm-service";
 
 // ─── In-memory turn state ─────────────────────────────────────────────────────
 
@@ -41,8 +42,8 @@ export async function startMatch(matchId: string): Promise<void> {
   const match = await getMatch(matchId);
   if (!match) return;
 
-  const hpA = CHARACTER_STATS[match.character_a].hp;
-  const hpB = CHARACTER_STATS[match.character_b].hp;
+  const hpA = getClassHp(match.character_a);
+  const hpB = getClassHp(match.character_b);
 
   await updateMatch(matchId, {
     status: "active",

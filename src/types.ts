@@ -1,17 +1,6 @@
 // ─── Character classes ────────────────────────────────────────────────────────
 
-export type CharacterClass = "warrior" | "mage" | "rogue";
-
-export interface CharacterStats {
-  hp: number;
-  description: string;
-}
-
-export const CHARACTER_STATS: Record<CharacterClass, CharacterStats> = {
-  warrior: { hp: 150, description: "physical tanky" },
-  mage: { hp: 80, description: "high magic damage" },
-  rogue: { hp: 100, description: "bonus surprise attacks" },
-};
+import type { CharacterClass } from "./config";
 
 // ─── Match state ──────────────────────────────────────────────────────────────
 
@@ -127,7 +116,7 @@ export const REDIS_KEYS = {
   turns: (id: string) => `battle:match:${id}:turns`,
   activeMatches: "battle:matches:active",
   feed: "battle:feed",
-} as const;
+};
 
 // ─── Game constants ───────────────────────────────────────────────────────────
 

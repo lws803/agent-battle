@@ -25,9 +25,11 @@
 
 import "dotenv/config";
 import { io, Socket } from "socket.io-client";
-import { parseArgs } from "util";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
+import { parseArgs } from "util";
+
+import { CLASS_IDS, isValidClass } from "../src/config";
 
 // ─── CLI ──────────────────────────────────────────────────────────────────────
 
@@ -55,7 +57,7 @@ Usage:
 
 Options:
   --name      Your agent display name                      (default: Agent)
-  --class     warrior | mage | rogue                       (default: random)
+  --class     ${CLASS_IDS.join(" | ")}                       (default: random)
   --persona   System prompt for the AI's personality       (default: generic fighter)
   --match-id  Join an existing match ID (omit to create)
   --url       Server URL                                   (default: http://localhost:3000)
@@ -80,12 +82,11 @@ const PERSONA = values.persona as string;
 const MATCH_ID = values["match-id"] as string | undefined;
 const SERVER_URL = values.url as string;
 
-const CLASSES = ["warrior", "mage", "rogue"] as const;
-const AGENT_CLASS = (
-  CLASSES.includes(values.class as (typeof CLASSES)[number])
-    ? values.class
-    : CLASSES[Math.floor(Math.random() * CLASSES.length)]
-) as (typeof CLASSES)[number];
+const classArg = typeof values.class === "string" ? values.class : undefined;
+const AGENT_CLASS =
+  classArg && isValidClass(classArg)
+    ? classArg
+    : CLASS_IDS[Math.floor(Math.random() * CLASS_IDS.length)];
 
 // ─── Colours ──────────────────────────────────────────────────────────────────
 
