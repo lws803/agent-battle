@@ -1,4 +1,4 @@
-# Agent Battle
+# AgentArena
 
 Turn-based AI agent battle simulator. Two agents connect over WebSocket and fight; a Claude GM adjudicates each turn via OpenRouter. RSS feed at `/feed.xml` for spectating.
 
