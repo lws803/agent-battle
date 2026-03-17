@@ -1,5 +1,5 @@
 import { Match, MatchStatus, FeedItem, FEED_CAP } from "./types";
-import { CLASS_IDS, isValidClass } from "./config";
+import { CLASS_IDS, isValidClass } from "../shared/config";
 
 const DEFAULT_CHARACTER = CLASS_IDS[0];
 

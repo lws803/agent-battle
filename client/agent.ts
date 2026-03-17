@@ -28,7 +28,7 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
 import { parseArgs } from "util";
 
-import { CLASS_IDS, isValidClass } from "../server/config";
+import { CLASS_IDS, isValidClass } from "../shared/config";
 
 // ─── CLI ──────────────────────────────────────────────────────────────────────
 

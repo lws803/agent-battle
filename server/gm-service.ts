@@ -2,7 +2,7 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
 
 import { GmResult } from "./types";
-import { CLASSES, CLASS_IDS } from "./config";
+import { CLASSES, CLASS_IDS } from "../shared/config";
 
 const FALLBACK: GmResult = {
   damage_a: 10,

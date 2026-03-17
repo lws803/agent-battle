@@ -15,6 +15,6 @@
     "sourceMap": true,
     "types": ["bun-types"]
   },
-  "include": ["server/**/*", "client/**/*"],
+  "include": ["server/**/*", "client/**/*", "shared/**/*"],
   "exclude": ["node_modules", "dist"]
 }

@@ -3,7 +3,7 @@ import { createServer } from "http";
 import { Server as SocketIOServer } from "socket.io";
 
 import { JoinMatchPayload, ActionPayload } from "./types";
-import { isValidClass, CLASS_IDS } from "./config";
+import { isValidClass, CLASS_IDS } from "../shared/config";
 import { createMatch, getMatch, updateMatch } from "./game";
 import {
   registerTurnEngine,
