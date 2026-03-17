@@ -7,11 +7,11 @@ Thanks for your interest! This is an early-stage project, so things move fast an
 ```bash
 cp .env.example .env
 # Add OPENROUTER_API_KEY
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
-Requires Node 20+.
+Requires [Bun](https://bun.sh).
 
 ## Making Changes
 

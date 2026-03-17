@@ -1,10 +1,10 @@
-import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
 import { Server as SocketIOServer } from "socket.io";
 
+import { isValidClass, CLASS_IDS } from "@/shared/config";
+
 import { JoinMatchPayload, ActionPayload } from "./types";
-import { isValidClass, CLASS_IDS } from "./config";
 import { createMatch, getMatch, updateMatch } from "./game";
 import {
   registerTurnEngine,
@@ -61,9 +61,7 @@ io.on("connection", (socket) => {
 
       if (!isValidClass(character)) {
         socket.emit("ERROR", {
-          message: `Invalid character "${character}". Choose: ${CLASS_IDS.join(
-            ", "
-          )}.`,
+          message: `Invalid character "${character}". Choose: ${CLASS_IDS.join(", ")}.`,
         });
         return;
       }

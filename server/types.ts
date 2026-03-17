@@ -1,6 +1,6 @@
 // ─── Character classes ────────────────────────────────────────────────────────
 
-import type { CharacterClass } from "./config";
+import type { CharacterClass } from "@/shared/config";
 
 // ─── Match state ──────────────────────────────────────────────────────────────
 

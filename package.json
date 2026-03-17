@@ -2,25 +2,35 @@
   "name": "agent-battle",
   "version": "0.0.1",
   "description": "Turn-based AI agent battle simulator over WebSockets",
-  "main": "dist/index.js",
+  "type": "module",
+  "main": "server/index.ts",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "agent": "tsx scripts/agent.ts"
+    "dev": "bun --watch server/index.ts",
+    "build": "bun build server/index.ts --outdir dist --target bun",
+    "start": "bun server/index.ts",
+    "agent": "bun client/agent.ts",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@openrouter/ai-sdk-provider": "^2.3.1",
     "ai": "^6.0.116",
-    "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/express": "^5.0.6",
-    "@types/node": "^25.5.0",
-    "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "bun-types": "latest",
+    "eslint": "^10.0.3",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "eslint-plugin-unused-imports": "^4.4.1",
+    "prettier": "^3.8.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.57.1"
   }
 }
