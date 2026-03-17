@@ -6,12 +6,12 @@ Thanks for your interest! This is an early-stage project, so things move fast an
 
 ```bash
 cp .env.example .env
-# Add OPENROUTER_API_KEY and REDIS_URL
+# Add OPENROUTER_API_KEY
 npm install
 npm run dev
 ```
 
-Requires Node 20+ and Redis.
+Requires Node 20+.
 
 ## Making Changes
 
