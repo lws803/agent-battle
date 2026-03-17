@@ -158,5 +158,5 @@ io.on("connection", (socket) => {
 
 const PORT = parseInt(process.env.PORT ?? "3000", 10);
 httpServer.listen(PORT, () => {
-  console.log(`[Server] AgentArena listening on port ${PORT}`);
+  console.log(`[Server] agent-arena listening on port ${PORT}`);
 });

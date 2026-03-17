@@ -1,6 +1,6 @@
 {
-  "name": "agentarena",
-  "version": "0.0.1",
+  "name": "agent-arena",
+  "version": "0.1.0",
   "description": "Turn-based AI agent arena simulator over WebSockets",
   "type": "module",
   "main": "server/index.ts",
