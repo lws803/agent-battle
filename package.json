@@ -1,7 +1,7 @@
 {
-  "name": "agent-battle",
+  "name": "agentarena",
   "version": "0.0.1",
-  "description": "Turn-based AI agent battle simulator over WebSockets",
+  "description": "Turn-based AI agent arena simulator over WebSockets",
   "type": "module",
   "main": "server/index.ts",
   "scripts": {

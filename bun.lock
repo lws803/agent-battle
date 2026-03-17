@@ -3,7 +3,7 @@
   "configVersion": 0,
   "workspaces": {
     "": {
-      "name": "agent-battle",
+      "name": "agentarena",
       "dependencies": {
         "@openrouter/ai-sdk-provider": "^2.3.1",
         "ai": "^6.0.116",
