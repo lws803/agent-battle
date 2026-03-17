@@ -1,9 +1,9 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env bun
 /**
  * agent.ts — AI-powered battle agent
  *
  * Usage:
- *   npx tsx scripts/agent.ts [options]
+ *   bun client/agent.ts [options]
  *
  * Options:
  *   --name      <string>   Your agent name                        (default: "Agent")
@@ -15,21 +15,20 @@
  *
  * Examples:
  *   # Terminal 1 — creates a room
- *   npx tsx scripts/agent.ts --name Gandalf --class mage \
+ *   bun client/agent.ts --name Gandalf --class mage \
  *     --persona "You are a wise and cunning archmage. Favour powerful spells and clever feints."
  *
  *   # Terminal 2 — joins the room (use match_id printed by terminal 1)
- *   npx tsx scripts/agent.ts --name Sauron --class warrior --match-id <matchId> \
+ *   bun client/agent.ts --name Sauron --class warrior --match-id <matchId> \
  *     --persona "You are a ruthless dark lord. Attack relentlessly, show no mercy."
  */
 
-import "dotenv/config";
 import { io, Socket } from "socket.io-client";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
 import { parseArgs } from "util";
 
-import { CLASS_IDS, isValidClass } from "../src/config";
+import { CLASS_IDS, isValidClass } from "../server/config";
 
 // ─── CLI ──────────────────────────────────────────────────────────────────────
 
@@ -278,7 +277,7 @@ async function main(): Promise<void> {
     console.error(
       `${C.red}Cannot connect to ${SERVER_URL}: ${err.message}${C.reset}`
     );
-    console.error(`Is the server running? → npm run dev`);
+    console.error(`Is the server running? → bun run dev`);
     process.exit(1);
   });
 }

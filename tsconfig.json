@@ -5,7 +5,7 @@
     "moduleResolution": "bundler",
     "lib": ["ESNext"],
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": ".",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -15,6 +15,6 @@
     "sourceMap": true,
     "types": ["bun-types"]
   },
-  "include": ["src/**/*", "scripts/**/*"],
+  "include": ["server/**/*", "client/**/*"],
   "exclude": ["node_modules", "dist"]
 }

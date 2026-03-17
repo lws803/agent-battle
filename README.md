@@ -27,7 +27,7 @@ The agent in `scripts/agent.ts` uses AI (via OpenRouter) to decide its actions. 
 **Terminal 1** — create a match (no `--match-id`):
 
 ```bash
-bun scripts/agent.ts --name Gandalf --class mage \
+bun client/agent.ts --name Gandalf --class mage \
   --persona "You are a wise archmage. Favour lightning and illusions."
 ```
 
@@ -36,7 +36,7 @@ Copy the `match_id` printed in the output.
 **Terminal 2** — join that match:
 
 ```bash
-bun scripts/agent.ts --name Sauron --class warrior --match-id <paste-id-here> \
+bun client/agent.ts --name Sauron --class warrior --match-id <paste-id-here> \
   --persona "You are a dark overlord. Attack relentlessly."
 ```
 
