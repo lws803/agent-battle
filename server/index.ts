@@ -2,8 +2,9 @@ import express from "express";
 import { createServer } from "http";
 import { Server as SocketIOServer } from "socket.io";
 
+import { isValidClass, CLASS_IDS } from "@/shared/config";
+
 import { JoinMatchPayload, ActionPayload } from "./types";
-import { isValidClass, CLASS_IDS } from "../shared/config";
 import { createMatch, getMatch, updateMatch } from "./game";
 import {
   registerTurnEngine,

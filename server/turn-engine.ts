@@ -1,6 +1,7 @@
 import { Server as SocketIOServer } from "socket.io";
 
-import { getClassHp } from "../shared/config";
+import { getClassHp } from "@/shared/config";
+
 import {
   MAX_TURNS,
   YourTurnPayload,
