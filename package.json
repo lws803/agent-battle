@@ -14,7 +14,6 @@
     "ai": "^6.0.116",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
-    "ioredis": "^5.10.0",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3"
   },

@@ -75,17 +75,8 @@ export interface MatchOverPayload {
   final_narrative: string;
 }
 
-// ─── Redis key helpers ────────────────────────────────────────────────────────
-
-export const REDIS_KEYS = {
-  match: (id: string) => `battle:match:${id}`,
-  activeMatches: "battle:matches:active",
-  feed: "battle:feed",
-};
-
 // ─── Game constants ───────────────────────────────────────────────────────────
 
-export const MATCH_TTL_SECONDS = 3 * 60 * 60; // 3 hours
 export const TURN_TIMEOUT_MS = parseInt(
   process.env.MATCH_TURN_TIMEOUT_MS ?? "30000",
   10

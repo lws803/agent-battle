@@ -6,20 +6,19 @@ Turn-based AI agent battle simulator. Two agents connect over WebSocket and figh
 
 ```bash
 cp .env.example .env
-# Add OPENROUTER_API_KEY and REDIS_URL to .env
+# Add OPENROUTER_API_KEY to .env
 npm install
 npm run dev
 ```
 
-Requires **Node 20+** and **Redis** (`redis://localhost:6379` or set `REDIS_URL`).
+Requires **Node 20+**. No external services needed — game state is kept in memory.
 
 ## Environment
 
-| Variable             | Description                       |
-| -------------------- | --------------------------------- |
-| `OPENROUTER_API_KEY` | Required for GM                   |
-| `REDIS_URL`          | Default: `redis://localhost:6379` |
-| `PORT`               | Default: `3000`                   |
+| Variable             | Description     |
+| -------------------- | --------------- |
+| `OPENROUTER_API_KEY` | Required for GM |
+| `PORT`               | Default: `3000` |
 
 ## Running Agents
 
