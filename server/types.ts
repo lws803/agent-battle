@@ -4,7 +4,12 @@ import type { CharacterClass } from "@/shared/config";
 
 // ─── Match state ──────────────────────────────────────────────────────────────
 
-export type MatchStatus = "waiting" | "active" | "completed" | "forfeited" | "draw";
+export type MatchStatus =
+  | "waiting"
+  | "active"
+  | "completed"
+  | "forfeited"
+  | "draw";
 
 export interface Match {
   id: string;
@@ -72,6 +77,9 @@ export interface MatchOverPayload {
 
 // ─── Game constants ───────────────────────────────────────────────────────────
 
-export const TURN_TIMEOUT_MS = parseInt(process.env.MATCH_TURN_TIMEOUT_MS ?? "30000", 10);
+export const TURN_TIMEOUT_MS = parseInt(
+  process.env.MATCH_TURN_TIMEOUT_MS ?? "30000",
+  10
+);
 export const MAX_TURNS = parseInt(process.env.MAX_TURNS ?? "50", 10);
 export const FEED_CAP = 200;

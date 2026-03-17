@@ -153,8 +153,10 @@ async function resolveTurn(matchId: string): Promise<void> {
   const match = await getMatch(matchId);
   if (!match || match.status !== "active") return;
 
-  const actionA = match.action_a || `${match.agent_a_name} hesitates, doing nothing.`;
-  const actionB = match.action_b || `${match.agent_b_name} hesitates, doing nothing.`;
+  const actionA =
+    match.action_a || `${match.agent_a_name} hesitates, doing nothing.`;
+  const actionB =
+    match.action_b || `${match.agent_b_name} hesitates, doing nothing.`;
 
   const gm = await adjudicateTurn(
     match.agent_a_name,
@@ -205,7 +207,14 @@ async function resolveTurn(matchId: string): Promise<void> {
   const bDefeated = newHpB <= 0;
 
   if (aDefeated || bDefeated || turnLimitReached) {
-    await endMatch(matchId, newHpA, newHpB, match.current_turn, turnLimitReached, gm.narrative);
+    await endMatch(
+      matchId,
+      newHpA,
+      newHpB,
+      match.current_turn,
+      turnLimitReached,
+      gm.narrative
+    );
   } else {
     await updateMatch(matchId, { current_turn: match.current_turn + 1 });
     await beginTurn(matchId);
@@ -275,14 +284,21 @@ export function handleDisconnect(socketId: string, matchId: string): void {
   void forfeitMatch(matchId, socketId);
 }
 
-async function forfeitMatch(matchId: string, forfeitingSocketId: string): Promise<void> {
+async function forfeitMatch(
+  matchId: string,
+  forfeitingSocketId: string
+): Promise<void> {
   const match = await getMatch(matchId);
   if (!match || match.status !== "active") return;
 
   const forfeitingAgent =
-    match.agent_a_socket_id === forfeitingSocketId ? match.agent_a_name : match.agent_b_name;
+    match.agent_a_socket_id === forfeitingSocketId
+      ? match.agent_a_name
+      : match.agent_b_name;
   const winner =
-    match.agent_a_socket_id === forfeitingSocketId ? match.agent_b_name : match.agent_a_name;
+    match.agent_a_socket_id === forfeitingSocketId
+      ? match.agent_b_name
+      : match.agent_a_name;
 
   const narrative = `${forfeitingAgent} has disconnected and forfeits the match. ${winner} is victorious!`;
 
@@ -293,7 +309,9 @@ async function forfeitMatch(matchId: string, forfeitingSocketId: string): Promis
   if (state?.actionTimer) clearTimeout(state.actionTimer);
   activeTurns.delete(matchId);
 
-  console.log(`[Match ${matchId}] ${forfeitingAgent} forfeited. ${winner} wins!`);
+  console.log(
+    `[Match ${matchId}] ${forfeitingAgent} forfeited. ${winner} wins!`
+  );
 
   const overPayload: MatchOverPayload = { winner, final_narrative: narrative };
   _io.to(match.agent_a_socket_id).emit("MATCH_OVER", overPayload);

@@ -143,7 +143,10 @@ async function decideAction(state: TurnState): Promise<string> {
     });
     return text.trim();
   } catch (err) {
-    console.error(`${label} ${C.red}AI error, using fallback action${C.reset}`, err);
+    console.error(
+      `${label} ${C.red}AI error, using fallback action${C.reset}`,
+      err
+    );
     return "I steel myself and strike at my opponent!";
   }
 }
@@ -174,7 +177,9 @@ async function main(): Promise<void> {
   });
 
   socket.on("MATCH_CREATED", (d: { match_id: string }) => {
-    console.log(`${label} ${C.yellow}Match ID: ${C.bold}${d.match_id}${C.reset}`);
+    console.log(
+      `${label} ${C.yellow}Match ID: ${C.bold}${d.match_id}${C.reset}`
+    );
     if (!MATCH_ID) {
       console.log(
         `${label} ${C.dim}Share this match_id with your opponent: --match-id ${d.match_id}${C.reset}`
@@ -238,10 +243,18 @@ async function main(): Promise<void> {
 
   socket.on(
     "TURN_RESULT",
-    (d: { turn: number; narrative: string; state: { hp_a: number; hp_b: number } }) => {
+    (d: {
+      turn: number;
+      narrative: string;
+      state: { hp_a: number; hp_b: number };
+    }) => {
       lastNarrative = d.narrative;
-      console.log(`\n  ${C.magenta}${C.bold}GM:${C.reset} ${C.magenta}${d.narrative}${C.reset}`);
-      console.log(`  ${C.dim}HP — A: ${d.state.hp_a} | B: ${d.state.hp_b}${C.reset}\n`);
+      console.log(
+        `\n  ${C.magenta}${C.bold}GM:${C.reset} ${C.magenta}${d.narrative}${C.reset}`
+      );
+      console.log(
+        `  ${C.dim}HP — A: ${d.state.hp_a} | B: ${d.state.hp_b}${C.reset}\n`
+      );
     }
   );
 
@@ -261,7 +274,9 @@ async function main(): Promise<void> {
   });
 
   socket.on("connect_error", (err: Error) => {
-    console.error(`${C.red}Cannot connect to ${SERVER_URL}: ${err.message}${C.reset}`);
+    console.error(
+      `${C.red}Cannot connect to ${SERVER_URL}: ${err.message}${C.reset}`
+    );
     console.error(`Is the server running? → bun run dev`);
     process.exit(1);
   });

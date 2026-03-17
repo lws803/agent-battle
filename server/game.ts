@@ -50,7 +50,10 @@ export async function getMatch(matchId: string): Promise<Match | null> {
   return matches.get(matchId) ?? null;
 }
 
-export async function updateMatch(matchId: string, updates: Partial<Match>): Promise<boolean> {
+export async function updateMatch(
+  matchId: string,
+  updates: Partial<Match>
+): Promise<boolean> {
   try {
     const match = matches.get(matchId);
     if (!match) return false;

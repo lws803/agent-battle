@@ -14,7 +14,9 @@ const FALLBACK: GmResult = {
 const damageGuidelines = CLASS_IDS.map((id) => {
   const c = CLASSES[id];
   const range =
-    c.damageMin != null && c.damageMax != null ? `${c.damageMin}-${c.damageMax}` : "10-25";
+    c.damageMin != null && c.damageMax != null
+      ? `${c.damageMin}-${c.damageMax}`
+      : "10-25";
   return `${id} ${range}`;
 }).join(", ");
 

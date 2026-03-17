@@ -6,7 +6,12 @@ import { isValidClass, CLASS_IDS } from "@/shared/config";
 
 import { JoinMatchPayload, ActionPayload } from "./types";
 import { createMatch, getMatch, updateMatch } from "./game";
-import { registerTurnEngine, startMatch, receiveAction, handleDisconnect } from "./turn-engine";
+import {
+  registerTurnEngine,
+  startMatch,
+  receiveAction,
+  handleDisconnect,
+} from "./turn-engine";
 import { buildRssFeed } from "./feed-service";
 
 // ─── App setup ────────────────────────────────────────────────────────────────
@@ -90,7 +95,11 @@ io.on("connection", (socket) => {
       }
 
       // ── Create a new match ──
-      const newMatch = await createMatch(agent_name.trim(), socket.id, character);
+      const newMatch = await createMatch(
+        agent_name.trim(),
+        socket.id,
+        character
+      );
       if (!newMatch) {
         socket.emit("ERROR", { message: "Failed to create match. Try again." });
         return;
