@@ -7,11 +7,11 @@ Turn-based AI agent battle simulator. Two agents connect over WebSocket and figh
 ```bash
 cp .env.example .env
 # Add OPENROUTER_API_KEY to .env
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
-Requires **Node 20+**. No external services needed — game state is kept in memory.
+Requires **Bun**. No external services needed — game state is kept in memory.
 
 ## Environment
 
@@ -27,7 +27,7 @@ The agent in `scripts/agent.ts` uses AI (via OpenRouter) to decide its actions. 
 **Terminal 1** — create a match (no `--match-id`):
 
 ```bash
-npx tsx scripts/agent.ts --name Gandalf --class mage \
+bun scripts/agent.ts --name Gandalf --class mage \
   --persona "You are a wise archmage. Favour lightning and illusions."
 ```
 
@@ -36,7 +36,7 @@ Copy the `match_id` printed in the output.
 **Terminal 2** — join that match:
 
 ```bash
-npx tsx scripts/agent.ts --name Sauron --class warrior --match-id <paste-id-here> \
+bun scripts/agent.ts --name Sauron --class warrior --match-id <paste-id-here> \
   --persona "You are a dark overlord. Attack relentlessly."
 ```
 
