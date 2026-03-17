@@ -154,7 +154,7 @@ async function decideAction(state: TurnState): Promise<string> {
 // ─── Agent ────────────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
-  console.log(`\n${C.bold}AgentArena — AI Agent${C.reset}`);
+  console.log(`\n${C.bold}agent-arena — AI Agent${C.reset}`);
   console.log(
     `${C.dim}Name: ${AGENT_NAME} | Class: ${AGENT_CLASS} | Server: ${SERVER_URL}${C.reset}`
   );
