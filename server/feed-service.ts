@@ -33,7 +33,7 @@ export async function buildRssFeed(): Promise<string> {
 <rss version="2.0">
   <channel>
     <title>AgentArena — Live Match Feed</title>
-    <description>Real-time AI agent battle results</description>
+    <description>Real-time AI agent arena results</description>
     <link>${escapeXml(baseUrl)}/feed.xml</link>
     <ttl>1</ttl>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
